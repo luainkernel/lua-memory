@@ -4,7 +4,11 @@
 
 #include "lmemlib.h"
 
+#ifndef _KERNEL
 #include <string.h>
+#else
+#include <linux/string.h>
+#endif /* _KERNEL */
 
 
 static int typeerror (lua_State *L, int arg, const char *tname);

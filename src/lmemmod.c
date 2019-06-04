@@ -2,7 +2,12 @@
 
 #include "lmemlib.h"
 
+#ifndef _KERNEL
 #include <string.h>
+#else
+#include <linux/module.h>
+#include <linux/string.h>
+#endif /* _KERNEL */
 #include <lualib.h>
 
 static lua_Integer posrelat (lua_Integer pos, size_t len);
@@ -250,6 +255,38 @@ LUAMEMMOD_API int luaopen_memory (lua_State *L) {
 	return 1;
 }
 
+#ifdef _KERNEL
+MODULE_LICENSE("Dual MIT/BSD");
+MODULE_DESCRIPTION("Library for manipulation of memory areas in Lua");
+
+EXPORT_SYMBOL(luamem_addvalue);
+EXPORT_SYMBOL(luamem_checklenarg);
+EXPORT_SYMBOL(luamem_checkmemory);
+EXPORT_SYMBOL(luamem_checkstring);
+EXPORT_SYMBOL(luamem_free);
+EXPORT_SYMBOL(luamem_isstring);
+EXPORT_SYMBOL(luamem_newalloc);
+EXPORT_SYMBOL(luamem_newref);
+EXPORT_SYMBOL(luamem_pushresult);
+EXPORT_SYMBOL(luamem_pushresultsize);
+EXPORT_SYMBOL(luamem_realloc);
+EXPORT_SYMBOL(luamem_setref);
+EXPORT_SYMBOL(luamem_tomemoryx);
+EXPORT_SYMBOL(luamem_tostring);
+EXPORT_SYMBOL(luamem_type);
+EXPORT_SYMBOL(luaopen_memory);
+
+static int __init modinit (void) {
+	return 0;
+}
+
+static void __exit modexit (void) {
+}
+
+module_init(modinit);
+module_exit(modexit);
+#endif /* _KERNEL */
+
 /*
 * NOTE: most of the code below is copied from the source of Lua 5.3.1 by
 *       R. Ierusalimschy, L. H. de Figueiredo, W. Celes - Lua.org, PUC-Rio.
@@ -369,12 +406,17 @@ static const union {
 /* dummy structure to get native alignment requirements */
 struct cD {
 	char c;
+#ifndef _KERNEL
 	union { double d; void *p; lua_Integer i; lua_Number n; } u;
+#else /* _KERNEL */
+	union { void *p; lua_Integer i; lua_Number n; } u;
+#endif /* _KERNEL */
 };
 
 #define MAXALIGN	(offsetof(struct cD, u))
 
 
+#ifndef _KERNEL
 /*
 ** Union for serializing floats
 */
@@ -384,6 +426,7 @@ typedef union Ftypes {
 	lua_Number n;
 	char buff[5 * sizeof(lua_Number)];  /* enough for any float type */
 } Ftypes;
+#endif /* _KERNEL */
 
 
 /*
@@ -402,7 +445,9 @@ typedef struct Header {
 typedef enum KOption {
 	Kint,		/* signed integers */
 	Kuint,	/* unsigned integers */
+#ifndef _KERNEL
 	Kfloat,	/* floating-point numbers */
+#endif /* _KERNEL */
 	Kchar,	/* fixed-length strings */
 	Kstring,	/* strings with prefixed length */
 	Kzstr,	/* zero-terminated strings */
@@ -470,9 +515,13 @@ static KOption getoption (Header *h, const char **fmt, int *size) {
 		case 'j': *size = sizeof(lua_Integer); return Kint;
 		case 'J': *size = sizeof(lua_Integer); return Kuint;
 		case 'T': *size = sizeof(size_t); return Kuint;
+#ifndef _KERNEL
 		case 'f': *size = sizeof(float); return Kfloat;
 		case 'd': *size = sizeof(double); return Kfloat;
 		case 'n': *size = sizeof(lua_Number); return Kfloat;
+#else /* _KERNEL */
+		case 'n': *size = sizeof(lua_Number); return Kint;
+#endif /* _KERNEL */
 		case 'i': *size = getnumlimit(h, fmt, sizeof(int)); return Kint;
 		case 'I': *size = getnumlimit(h, fmt, sizeof(int)); return Kuint;
 		case 's': *size = getnumlimit(h, fmt, sizeof(size_t)); return Kstring;
@@ -590,6 +639,7 @@ static int packint (char **b, size_t *pos, size_t lb,
 }
 
 
+#ifndef _KERNEL
 /*
 ** Copy 'size' bytes from 'src' to 'dest', correcting endianness if
 ** given 'islittle' is different from native endianness.
@@ -606,6 +656,7 @@ static void copywithendian (volatile char *dest, volatile const char *src,
 			*(dest--) = *(src++);
 	}
 }
+#endif /* _KERNEL */
 
 static int mem_pack (lua_State *L) {
 	Header h;
@@ -645,6 +696,7 @@ static int mem_pack (lua_State *L) {
 					return packfailed(L, i, arg);
 				break;
 			}
+#ifndef _KERNEL
 			case Kfloat: {  /* floating-point options */
 				volatile Ftypes u;
 				lua_Number n;
@@ -658,6 +710,7 @@ static int mem_pack (lua_State *L) {
 				copywithendian(data, u.buff, size, h.islittle);
 				break;
 			}
+#endif /* _KERNEL */
 			case Kchar: {  /* fixed-size string */
 				size_t len;
 				const char *s = luamem_checkstring(L, arg, &len);
@@ -761,6 +814,7 @@ static int mem_unpack (lua_State *L) {
 				lua_pushinteger(L, res);
 				break;
 			}
+#ifndef _KERNEL
 			case Kfloat: {
 				volatile Ftypes u;
 				lua_Number num;
@@ -771,6 +825,7 @@ static int mem_unpack (lua_State *L) {
 				lua_pushnumber(L, num);
 				break;
 			}
+#endif /* _KERNEL */
 			case Kchar: {
 				lua_pushlstring(L, data + pos, size);
 				break;
