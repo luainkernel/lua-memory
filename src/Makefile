@@ -71,6 +71,9 @@ $(LIB_A): $(ALL_O)
 clean:
 	$(RM) $(ALL_T) $(ALL_O)
 
+clean_objs:
+	$(RM) $(ALL_O)
+
 depend:
 	@$(CC) $(CFLAGS) -MM l*.c
 

@@ -255,38 +255,6 @@ LUAMEMMOD_API int luaopen_memory (lua_State *L) {
 	return 1;
 }
 
-#ifdef _KERNEL
-MODULE_LICENSE("Dual MIT/BSD");
-MODULE_DESCRIPTION("Library for manipulation of memory areas in Lua");
-
-EXPORT_SYMBOL(luamem_addvalue);
-EXPORT_SYMBOL(luamem_checklenarg);
-EXPORT_SYMBOL(luamem_checkmemory);
-EXPORT_SYMBOL(luamem_checkstring);
-EXPORT_SYMBOL(luamem_free);
-EXPORT_SYMBOL(luamem_isstring);
-EXPORT_SYMBOL(luamem_newalloc);
-EXPORT_SYMBOL(luamem_newref);
-EXPORT_SYMBOL(luamem_pushresult);
-EXPORT_SYMBOL(luamem_pushresultsize);
-EXPORT_SYMBOL(luamem_realloc);
-EXPORT_SYMBOL(luamem_setref);
-EXPORT_SYMBOL(luamem_tomemoryx);
-EXPORT_SYMBOL(luamem_tostring);
-EXPORT_SYMBOL(luamem_type);
-EXPORT_SYMBOL(luaopen_memory);
-
-static int __init modinit (void) {
-	return 0;
-}
-
-static void __exit modexit (void) {
-}
-
-module_init(modinit);
-module_exit(modexit);
-#endif /* _KERNEL */
-
 /*
 * NOTE: most of the code below is copied from the source of Lua 5.3.1 by
 *       R. Ierusalimschy, L. H. de Figueiredo, W. Celes - Lua.org, PUC-Rio.
